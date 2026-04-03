@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハートグラム診断 Ver.3</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',sans-serif;background:#fafaf8;color:#1a1a1a;font-size:15px}
+.app{max-width:1020px;margin:0 auto;padding:1.2rem}
+header{text-align:center;padding:1.5rem 0 1rem;border-bottom:2px solid #e8e0d0;margin-bottom:1.2rem}
+header h1{font-size:22px;font-weight:700;color:#2d2d2d;letter-spacing:1px}
+header p{font-size:12px;color:#999;margin-top:4px}
+.tab-bar{display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:1px solid #ddd;flex-wrap:wrap}
+.tab{padding:8px 16px;font-size:13px;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;color:#888;background:transparent;transition:all .15s;font-family:inherit}
+.tab.active{background:#fff;border-color:#ddd;color:#333;font-weight:700;margin-bottom:-1px}
+.section{display:none}.section.active{display:block}
+.question-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:1rem 1.2rem;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.q-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.q-num{width:28px;height:28px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#777;flex-shrink:0;margin-top:2px}
+.q-text{font-size:14px;line-height:1.65;color:#333;padding-top:3px}
+.btn-group{display:flex;gap:8px}
+.btn-choice{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;background:#fff;color:#555;transition:all .15s;font-family:inherit}
+.btn-choice:hover{background:#f8f8f8}
+.btn-choice.yes-sel{background:#EEF0FF;border-color:#6366f1;color:#4338CA;font-weight:700}
+.btn-choice.mid-sel{background:#FFF8E6;border-color:#d97706;color:#92400e;font-weight:700}
+.btn-choice.no-sel{background:#f0f0f0;border-color:#bbb;color:#777;font-weight:700}
+.progress-wrap{margin-bottom:1rem}
+.progress-bar{background:#eee;border-radius:8px;height:6px;margin-bottom:4px}
+.progress-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#6366f1,#a855f7);transition:width .3s}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:#999}
+.btn-primary{padding:10px 22px;background:#fff;border:1px solid #ccc;border-radius:7px;cursor:pointer;font-size:14px;font-weight:700;color:#333;font-family:inherit;transition:all .15s}
+.btn-primary:hover{background:#f5f5f5;border-color:#aaa}
+.btn-primary:active{transform:scale(0.98)}
+.result-box{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.5rem}
+.score-card{background:#f8f8f8;border-radius:8px;padding:10px;text-align:center;border:1px solid #eee}
+.score-label{font-size:11px;color:#999;margin-bottom:4px}
+.score-num{font-size:24px;font-weight:800}
+.type-bar{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.type-name{width:90px;font-size:13px;font-weight:700;color:#333}
+.bar-wrap{flex:1;height:13px;background:#eee;border-radius:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:8px;transition:width .5s}
+.bar-dog{background:#6366f1}.bar-angel{background:#ec4899}.bar-kiri{background:#3b82f6}.bar-ari{background:#22c55e}.bar-judge{background:#f59e0b}
+.bar-count{width:32px;font-size:14px;font-weight:700;text-align:right}
+.section-header{font-size:12px;font-weight:700;color:#aaa;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #f0f0f0;text-transform:uppercase;letter-spacing:.8px}
+.detail-item{border-radius:7px;padding:9px 13px;margin-bottom:7px;font-size:13px;line-height:1.55}
+.detail-item.warn{background:#FFF8E6;color:#92400e;border-left:3px solid #f59e0b}
+.detail-item.ok{background:#F0FDF4;color:#14532d;border-left:3px solid #22c55e}
+.detail-item.neutral{background:#f5f5f5;color:#555;border-left:3px solid #ccc}
+.detail-item.alert{background:#FEF2F2;color:#7f1d1d;border-left:3px solid #ef4444}
+.detail-item.info{background:#EFF6FF;color:#1e3a5f;border-left:3px solid #3b82f6}
+.pattern-tag{display:inline-block;font-size:12px;padding:4px 12px;border-radius:20px;margin:3px;font-weight:600}
+.color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:1.5rem}
+.color-card{border:1px solid #e8e8e8;border-radius:10px;padding:10px;cursor:pointer;transition:all .15s;text-align:center;background:#fff}
+.color-card:hover{background:#f8f8f8;border-color:#ccc}
+.color-dot{width:32px;height:32px;border-radius:50%;margin:0 auto 6px;border:1px solid rgba(0,0,0,.1)}
+.color-name{font-size:12px;font-weight:700;color:#333}
+.color-result{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:1.2rem;margin-top:1rem;display:none}
+.color-type-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.color-type-tag{font-size:12px;padding:3px 10px;border-radius:12px;font-weight:600}
+.futari-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+input[type=number]{width:65px;padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fff;color:#333;font-family:inherit}
+input[type=number]:focus{outline:none;border-color:#6366f1}
+.insight-box{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:1rem;margin-bottom:10px}
+.insight-title{font-size:13px;font-weight:700;color:#555;margin-bottom:6px}
+.insight-item{font-size:13px;line-height:1.6;color:#444;padding:4px 0;border-bottom:1px solid #f5f5f5}
+.insight-item:last-child{border-bottom:none}
+.tabs-inner{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.tab-inner{padding:5px 14px;font-size:12px;cursor:pointer;border:1px solid #ddd;border-radius:20px;color:#888;background:#fff;font-family:inherit;transition:all .15s}
+.tab-inner.active{background:#6366f1;color:#fff;border-color:#6366f1}
+.sub-section{display:none}.sub-section.active{display:block}
+/* 総合診断 */
+.sogo-box{background:linear-gradient(135deg,#fff9f0,#f0f4ff);border:1.5px solid #d0c8f0;border-radius:14px;padding:1.5rem;margin-bottom:1rem}
+.sogo-title{font-size:15px;font-weight:800;color:#4338CA;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e0dafb}
+.sogo-section{margin-bottom:14px}
+.sogo-section-title{font-size:12px;font-weight:700;color:#6366f1;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
+.sogo-text{font-size:13px;line-height:1.9;color:#333}
+.sogo-highlight{background:#EEF0FF;border-radius:6px;padding:2px 7px;font-weight:700;color:#4338CA}
+.zone-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;margin:4px 2px}
+.zone-comfort{background:#FFF3CD;color:#856404;border:1px solid #ffd060}
+.zone-learning{background:#D1FAE5;color:#065f46;border:1px solid #34d399}
+.zone-panic{background:#FEE2E2;color:#991b1b;border:1px solid #f87171}
+@media(max-width:600px){
+  .score-grid{grid-template-columns:repeat(3,1fr)}
+  .futari-grid{grid-template-columns:1fr}
+  .tab{padding:7px 10px;font-size:12px}
+  .tabs-inner .tab-inner{font-size:11px;padding:5px 10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>💗 ハートグラム診断 Ver.3</h1>
+    <p>HEART GRAM® Ver.3 ©藤田サトシ ／ 婚活カウンセラー活用版 ／ スライドデータ完全統合</p>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('shindan',this)">性格診断</button>
+    <button class="tab" onclick="switchTab('color',this)">カラー診断</button>
+    <button class="tab" onclick="switchTab('futari',this)">2人鑑定</button>
+    <button class="tab" onclick="switchTab('insight',this)">タイプ別分析</button>
+  </div>
+
+  <!-- 性格診断 -->
+  <div id="tab-shindan" class="section active">
+    <div id="shindan-form">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:15px;font-weight:700">Q1〜Q25 ハートグラム診断</div>
+          <div style="font-size:12px;color:#999">各質問に直感で回答してください（はい＝1点 / 迷った＝0.5点）</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-primary" style="padding:6px 12px;font-size:12px" onclick="shuffleAndReset()">🔀 シャッフル</button>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-label"><span id="progress-text">0/25</span><span id="progress-pct">0%</span></div>
+      </div>
+      <div id="questions-container"></div>
+      <div style="text-align:center;margin-top:1.5rem;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn-primary" onclick="calcResult()">✅ 結果を見る</button>
+        <button class="btn-primary" onclick="shuffleAndReset()">🔄 リセット</button>
+      </div>
+    </div>
+
+    <div id="shindan-result" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <div style="font-size:16px;font-weight:800">診断結果</div>
+        <button class="btn-primary" onclick="backToForm()">← 戻る</button>
+      </div>
+      <div class="score-grid" id="score-grid"></div>
+      <div class="result-box">
+        <div class="section-header">タイプ別枚数</div>
+        <div id="bar-chart"></div>
+      </div>
+      <div class="result-box">
+        <div class="section-header">主タイプ＋配列説明</div>
+        <div id="main-type-result"></div>
+      </div>
+      <div class="result-box">
+        <div class="section-header">パターン診断タグ</div>
+        <div id="pattern-result"></div>
+      </div>
+
+      <div class="tabs-inner">
+        <button class="tab-inner active" onclick="switchSub('love',this)">💕恋愛</button>
+        <button class="tab-inner" onclick="switchSub('work',this)">💼仕事</button>
+        <button class="tab-inner" onclick="switchSub('health',this)">🏥健康</button>
+        <button class="tab-inner" onclick="switchSub('behavior',this)">🛒行動・消費</button>
+        <button class="tab-inner" onclick="switchSub('lifestyle',this)">🍽️生活スタイル</button>
+        <button class="tab-inner" onclick="switchSub('risk',this)">⚠️リスク</button>
+        <button class="tab-inner" onclick="switchSub('sogo',this)">📋総合診断</button>
+      </div>
+
+      <div id="sub-love" class="sub-section active result-box">
+        <div class="section-header">恋愛・婚活アドバイス</div>
+        <div id="love-result"></div>
+      </div>
+      <div id="sub-work" class="sub-section result-box">
+        <div class="section-header">仕事・ビジネス適性</div>
+        <div id="work-result"></div>
+      </div>
+      <div id="sub-health" class="sub-section result-box">
+        <div class="section-header">健康チェック</div>
+        <div id="health-result"></div>
+      </div>
+      <div id="sub-behavior" class="sub-section result-box">
+        <div class="section-header">行動・消費・お金の使い方</div>
+        <div id="behavior-result"></div>
+      </div>
+      <div id="sub-lifestyle" class="sub-section result-box">
+        <div class="section-header">生活スタイル（食事・写真・美容院・クルマ）</div>
+        <div id="lifestyle-result"></div>
+      </div>
+      <div id="sub-risk" class="sub-section result-box">
+        <div class="section-header">リスク・注意点</div>
+        <div id="risk-result"></div>
+      </div>
+      <div id="sub-sogo" class="sub-section">
+        <div id="sogo-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- カラー診断 -->
+  <div id="tab-color" class="section">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">カラー診断</div>
+    <div style="font-size:12px;color:#999;margin-bottom:1rem">好きな色を直感で1つ選んでください</div>
+    <div class="color-grid" id="color-grid"></div>
+    <div class="color-result" id="color-result">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div id="color-dot-large" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(0,0,0,.1);flex-shrink:0"></div>
+        <div>
+          <div style="font-size:16px;font-weight:800" id="color-title"></div>
+          <div style="font-size:12px;color:#c00;margin-top:2px" id="color-dislike"></div>
+        </div>
+      </div>
+      <div style="font-size:14px;line-height:1.75;color:#444;margin-bottom:12px" id="color-advice"></div>
+      <div style="font-size:13px;font-weight:700;color:#777;margin-bottom:6px">▶ ハートグラムタイプとの関連</div>
+      <div class="color-type-tags" id="color-type-tags"></div>
+      <div style="font-size:13px;font-weight:700;color:#777;margin-top:14px;margin-bottom:6px">▶ 魅力を高めるラッキーカラー（逆に選ぶと）</div>
+      <div id="color-lucky"></div>
+    </div>
+  </div>
+
+  <!-- 2人鑑定 -->
+  <div id="tab-futari" class="section">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">2人鑑定（相性診断）</div>
+    <div style="font-size:12px;color:#999;margin-bottom:1rem">自分と相手のタイプ別枚数を入力してください</div>
+    <div class="futari-grid">
+      <div class="result-box">
+        <div class="section-header" style="margin-bottom:12px">自分の枚数</div>
+        <div id="self-inputs"></div>
+      </div>
+      <div class="result-box">
+        <div class="section-header" style="margin-bottom:12px">相手の枚数</div>
+        <div id="other-inputs"></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <button class="btn-primary" onclick="calcCompatibility()">💑 相性を診断する</button>
+    </div>
+    <div id="compat-result"></div>
+  </div>
+
+  <!-- タイプ別分析 -->
+  <div id="tab-insight" class="section">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">タイプ別詳細分析</div>
+    <div style="font-size:12px;color:#999;margin-bottom:1rem">各タイプの詳細な特徴・傾向を確認できます</div>
+    <div class="tabs-inner">
+      <button class="tab-inner active" onclick="switchInsight('dog',this)">🐶 犬</button>
+      <button class="tab-inner" onclick="switchInsight('angel',this)">👼 天使</button>
+      <button class="tab-inner" onclick="switchInsight('kiri',this)">🦗 キリギリス</button>
+      <button class="tab-inner" onclick="switchInsight('ari',this)">🐜 アリ</button>
+      <button class="tab-inner" onclick="switchInsight('judge',this)">⚖️ 裁判官</button>
+    </div>
+    <div id="insight-content"></div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS=[
+  {type:0,text:'物足りないと思われたりいじられ役かもしれない'},
+  {type:0,text:'不向きな仕事でも働き続ける忍耐力を持つ'},
+  {type:0,text:'すぐに謝ってしまったりぺこぺこしてしまう癖がある'},
+  {type:0,text:'人に指示を出すよりも指示をされている方が向いている'},
+  {type:0,text:'会議やセミナーでは意見を求められたくない'},
+  {type:1,text:'いつでも笑顔で明るく振る舞うことを心がけている'},
+  {type:1,text:'他人に自分が役立つ視点で行動している'},
+  {type:1,text:'親やご先祖様に敬意を払う'},
+  {type:1,text:'他人への感謝の気持ちや義理を欠かさない'},
+  {type:1,text:'不幸なことがあっても自分は幸せだと思う'},
+  {type:2,text:'ビジネスにおいて社外や異業種との交友関係が広い'},
+  {type:2,text:'大志を抱き着々と実行に移してきている'},
+  {type:2,text:'ファッションに敏感で異性から好意を示される'},
+  {type:2,text:'チャンスに強く失敗を恐れない'},
+  {type:2,text:'人を楽しませたり笑わせるのが得意である'},
+  {type:3,text:'数字に強く細かな作業が苦にならない'},
+  {type:3,text:'少しでも割安な商品や店を選ぶ倹約家だ'},
+  {type:3,text:'生真面目が原因で雑談の輪に入りづらい'},
+  {type:3,text:'リスクに目が行きがちで決断が遅くなる'},
+  {type:3,text:'取り扱い説明書を読むことは苦にならない'},
+  {type:4,text:'仕事ができない人には辞めてもらうのは当然だ'},
+  {type:4,text:'ライバルに勝つためには手段を選ばず'},
+  {type:4,text:'納得できないルールには従わない'},
+  {type:4,text:'屈辱を味わされたら闘争心に火がつく'},
+  {type:4,text:'言いたいことはその場で言わないと気が済まない'}
+];
+
+const TYPES=['犬','天使','キリギリス','アリ','裁判官'];
+const TYPE_COLORS=['#6366f1','#ec4899','#3b82f6','#22c55e','#f59e0b'];
+const BAR_CLASSES=['bar-dog','bar-angel','bar-kiri','bar-ari','bar-judge'];
+
+const TYPE_DESC=[
+  '依存的・大企業向き・お見合いに向いている。自信がなく目を伏せがち。決断力が弱いため早く決断するよう促すと効果的。学習性無力感により自己肯定感・自己効力感が低い傾向がある。',
+  '他人に優しく利他主義。オープンマインドで感情表現豊か。尽くしすぎる傾向があり、相手との天使枚数バランスが重要。感謝・義理を大切にし、家族・親への敬意が強い。',
+  '営業・芸術・右脳タイプ。行動派でリーダーシップがある。お金は貯まりにくく、大志を持ち即行動する。社外との人脈が広く、ファッションセンスがある。',
+  '事務・技術・左脳タイプ。倹約家で内面重視の研究者気質。リスクを慎重に見るため決断が遅い。細かい作業が得意で生真面目な傾向がある。',
+  '他人に厳しく利己主義。独立起業向き。主導権を握りたいタイプ。高い目標を持ち結果にこだわる。指摘・命令をしないよう注意して接する必要がある。'
+];
+
+let order=[];
+let answers={};
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function shuffleAndReset(){
+  answers={};
+  order=shuffle([...Array(25).keys()]);
+  buildQuestions();
+  updateProgress();
+  document.getElementById('shindan-form').style.display='block';
+  document.getElementById('shindan-result').style.display='none';
+}
+
+function buildQuestions(){
+  const c=document.getElementById('questions-container');
+  c.innerHTML=order.map((qi,pos)=>`
+    <div class="question-card" id="qcard-${qi}">
+      <div class="q-header">
+        <div class="q-num">${pos+1}</div>
+        <div class="q-text">${QUESTIONS[qi].text}</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn-choice ${answers[qi]==='yes'?'yes-sel':''}" onclick="setAnswer(${qi},'yes')">はい</button>
+        <button class="btn-choice ${answers[qi]==='mid'?'mid-sel':''}" onclick="setAnswer(${qi},'mid')">迷った</button>
+        <button class="btn-choice ${answers[qi]==='no'?'no-sel':''}" onclick="setAnswer(${qi},'no')">いいえ</button>
+      </div>
+    </div>`).join('');
+}
+
+function setAnswer(qi,val){
+  answers[qi]=val;
+  const btns=document.getElementById('qcard-'+qi).querySelectorAll('.btn-choice');
+  btns[0].className='btn-choice'+(val==='yes'?' yes-sel':'');
+  btns[1].className='btn-choice'+(val==='mid'?' mid-sel':'');
+  btns[2].className='btn-choice'+(val==='no'?' no-sel':'');
+  updateProgress();
+}
+
+function updateProgress(){
+  const done=Object.keys(answers).length;
+  const pct=Math.round(done/25*100);
+  document.getElementById('progress-text').textContent=done+'/25';
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('progress-fill').style.width=pct+'%';
+}
+
+function getScores(){
+  const s=[0,0,0,0,0];
+  for(let qi=0;qi<25;qi++){
+    if(answers[qi]==='yes') s[QUESTIONS[qi].type]++;
+    else if(answers[qi]==='mid') s[QUESTIONS[qi].type]+=0.5;
+  }
+  return s;
+}
+
+function calcResult(){
+  const s=getScores();
+  document.getElementById('shindan-form').style.display='none';
+  document.getElementById('shindan-result').style.display='block';
+  window.scrollTo(0,0);
+
+  document.getElementById('score-grid').innerHTML=TYPES.map((t,i)=>`
+    <div class="score-card">
+      <div class="score-label">${t}</div>
+      <div class="score-num" style="color:${TYPE_COLORS[i]}">${s[i]}</div>
+    </div>`).join('');
+
+  const max=Math.max(...s,1);
+  document.getElementById('bar-chart').innerHTML=TYPES.map((t,i)=>`
+    <div class="type-bar">
+      <div class="type-name">${t}</div>
+      <div class="bar-wrap"><div class="bar-fill ${BAR_CLASSES[i]}" style="width:${Math.round(s[i]/max*100)}%"></div></div>
+      <div class="bar-count" style="color:${TYPE_COLORS[i]}">${s[i]}</div>
+    </div>`).join('');
+
+  const top=s.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v)[0];
+  const sorted=s.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v);
+  const subType=sorted[1].v>0?TYPES[sorted[1].i]:'なし';
+  const open=s[1]+s[2], close=s[3]+s[4];
+  const active=s[2]+s[4], passive=s[0]+s[1]+s[3];
+
+  document.getElementById('main-type-result').innerHTML=`
+    <div style="font-size:17px;font-weight:800;margin-bottom:10px">主タイプ：<span style="color:${TYPE_COLORS[top.i]}">${TYPES[top.i]}タイプ（${s[top.i]}枚）</span>
+      ${sorted[1].v>0?` <span style="font-size:13px;color:#999;font-weight:400">副：${subType}（${sorted[1].v}枚）</span>`:''}
+    </div>
+    <div style="font-size:13px;line-height:1.8;color:#666">${TYPE_DESC[top.i]}</div>
+    <div style="margin-top:12px;font-size:12px;color:#999">
+      上下比較：オープン（天使+キリギリス）= <b>${open}</b> ／ クローズ（アリ+裁判官）= <b>${close}</b><br>
+      左右比較：受動（犬+天使+アリ）= <b>${passive}</b> ／ 能動（キリギリス+裁判官）= <b>${active}</b>
+    </div>`;
+
+  document.getElementById('pattern-result').innerHTML=getPatterns(s);
+  document.getElementById('love-result').innerHTML=getLoveResult(s);
+  document.getElementById('work-result').innerHTML=getWorkResult(s);
+  document.getElementById('health-result').innerHTML=getHealthResult(s);
+  document.getElementById('behavior-result').innerHTML=getBehaviorResult(s);
+  document.getElementById('lifestyle-result').innerHTML=getLifestyleResult(s);
+  document.getElementById('risk-result').innerHTML=getRiskResult(s);
+  document.getElementById('sogo-result').innerHTML=getSogoResult(s);
+}
+
+function getPatterns(s){
+  const [d,a,k,r,j]=s;
+  let tags=[];
+  if(d===0&&j>=3) tags.push({t:'💼 経営者タイプ（男性）',c:'#6366f1'});
+  if(d===0&&j>=2) tags.push({t:'💼 経営者タイプ（女性）',c:'#6366f1'});
+  if(d>=1&&r>=2) tags.push({t:'🏢 会社員タイプ',c:'#3b82f6'});
+  if(k>=3&&k>r) tags.push({t:'📈 営業職タイプ',c:'#f59e0b'});
+  if(r>=2&&k<=2) tags.push({t:'🖥️ 事務・技術職タイプ',c:'#22c55e'});
+  if(d>=3&&a>=4&&r>=3) tags.push({t:'👑 お嬢様タイプ',c:'#ec4899'});
+  if(d>=3&&a>=4&&j===0) tags.push({t:'💔 恋愛できるが結婚難しいタイプ',c:'#ef4444'});
+  if(d>=3&&r>=3&&k<=2) tags.push({t:'🤝 仲人がいると結婚できるタイプ',c:'#f59e0b'});
+  if(j>=4) tags.push({t:'⚡ クレーマー注意タイプ',c:'#ef4444'});
+  if(d>=3&&a<=1) tags.push({t:'😟 鬱病リスクあり',c:'#ef4444'});
+  if(r>=4&&k<=1) tags.push({t:'😰 強迫性障害リスク',c:'#ef4444'});
+  if(d+a+r>=(k+j)*2) tags.push({t:'🐢 受動的タイプ',c:'#6366f1'});
+  if((k+j)>=(d+a+r)*2) tags.push({t:'🚀 能動的タイプ',c:'#f59e0b'});
+  // コンフォートゾーン判定
+  const comfort=d+a+r, learn=k+j;
+  if(learn>comfort) tags.push({t:'🌱 ラーニングゾーン寄り（成長型）',c:'#22c55e'});
+  else if(comfort>=learn*2) tags.push({t:'🛋️ コンフォートゾーン寄り（現状維持型）',c:'#888'});
+  // ADHD配列
+  if(d===0&&a===0&&(k+j+a>=4)) tags.push({t:'⚡ ADHD・パイプカット症候群の可能性',c:'#a855f7'});
+  if(tags.length===0) tags.push({t:'⚖️ バランスタイプ',c:'#888'});
+  return tags.map(t=>`<span class="pattern-tag" style="background:${t.c}20;color:${t.c}">${t.t}</span>`).join('');
+}
+
+function getLoveResult(s){
+  const [d,a,k,r,j]=s;
+  let items=[];
+  if(a<=1) items.push({t:'天使1枚以下：鑑定不能レベル。恋愛そのものが難しい状態',w:'alert'});
+  else if(a===2) items.push({t:'天使2枚：機能不全家族の可能性。恋愛できないのが悩みかも',w:'warn'});
+  else if(a<=3) items.push({t:'天使3枚以下：情が薄い。悩みを抱えている可能性あり',w:'neutral'});
+  else items.push({t:'天使4枚以上：情に厚い。尽くしすぎる傾向あり',w:'ok'});
+  if(a>=3&&j===0) items.push({t:'天使3枚以上＋裁判官0：過去に相手から捨てられている可能性大',w:'warn'});
+  if(a===2&&j===0) items.push({t:'天使2枚以下＋裁判官0：捨てられても気にしないタイプ',w:'neutral'});
+  if(j>=a) items.push({t:'裁判官≧天使：きつい性格で恋愛前に至らない可能性',w:'warn'});
+  else if(a>j+2) items.push({t:'天使が裁判官より多い：恋愛バランス良好',w:'ok'});
+  if(d>=3&&a>=4&&j===0) items.push({t:'婚活難民パターン：恋愛できるが結婚に至らない',w:'warn'});
+  if(d>=3&&r>=3&&k<=2) items.push({t:'仲人がいないと結婚できないパターン',w:'warn'});
+  const open=a+k,close=r+j;
+  if(open>=close*2) items.push({t:'オープンマインド優位：自己開示が得意で恋愛に有利',w:'ok'});
+  else if(close>=open*2) items.push({t:'クローズドマインド優位：自己開示が苦手で恋愛が難しい',w:'neutral'});
+  // 写真×婚活
+  if(r>=3&&k<=1) items.push({t:'写真：生真面目な証明写真タイプ → 就活には得意でも婚活プロフ写真は苦手な傾向',w:'warn'});
+  if(k>=3) items.push({t:'写真：宣材センスがある。将来の成功をお金で買う発想あり',w:'ok'});
+  if(d>=3) items.push({t:'写真：撮られたくない・演出が苦手。婚活写真には工夫が必要',w:'warn'});
+  // 昇進リスクと結婚
+  if((d>=4||d>=4)&&(k<=1||j<=1)) items.push({t:'昇進すると鬱・統合失調症のリスクあり（犬4〜5または天使多）',w:'warn'});
+  // 結婚相談所営業法ヒント
+  items.push({t:`あなたへの婚活アプローチ法：${getMatchApproach(s)}`,w:'info'});
+  return items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('');
+}
+
+function getMatchApproach(s){
+  const [d,a,k,r,j]=s;
+  const max=Math.max(d,a,k,r,j);
+  if(d===max) return '「相手を選んであげます」「私にまかせなさい」というスタンスで接し、時にはプロポーズまで代行する姿勢が効果的';
+  if(a===max) return '親身に対応して背中を押してあげる。優しく押されると決断できるタイプ';
+  if(k===max) return 'イケメン・美女の写真を先に見せる。好奇心と将来性をアピールして即決を促す';
+  if(r===max) return '「どこよりも安い・成功報酬型」を強調。規約を全て読んでもらい、リスクゼロを伝える';
+  if(j===max) return '「嘘・偽りのない情報から自分で選んでね」と伝え、決断は相手に任せる。尊敬できるカウンセラーとして接する';
+  return '総合的なアプローチで';
+}
+
+function getWorkResult(s){
+  const [d,a,k,r,j]=s;
+  let items=[];
+  if(k>=r+2) items.push({t:'営業派：キリギリスがアリより2枚以上多い→売上アップ型',w:'ok'});
+  else if(r>=k+2) items.push({t:'経費節約派：アリがキリギリスより2枚以上多い→コスト削減型',w:'ok'});
+  if(k<3) items.push({t:'キリギリス3枚未満：売上に困っている可能性あり',w:'warn'});
+  const open=a+k,close=r+j;
+  if(open>=close*2) items.push({t:'オープンマインド優位：接客業・チームワーク・目立つ仕事向き',w:'ok'});
+  else if(close>=open*2) items.push({t:'クローズドマインド優位：1人仕事・研究者・静かな仕事向き',w:'ok'});
+  const active=k+j,passive=d+a+r;
+  if(active>=passive*2) items.push({t:'能動的優位：飛び込み営業・新規開拓・プレゼン向き',w:'ok'});
+  else if(passive>=active*2) items.push({t:'受動的優位：ルート営業・受付・公務員・サポート向き',w:'ok'});
+  if(d===0&&j>=3) items.push({t:'経営者配列：社長・リーダーとして機能しやすい',w:'ok'});
+  if(d>=1&&r>=2) items.push({t:'会社員配列：組織の中で安定して働けるタイプ',w:'neutral'});
+  // AI仕事リスク
+  if(d>=3) items.push({t:'⚠️ AIやロボットに仕事を奪われるリスク：高い（犬多は経済難民になりやすい）',w:'warn'});
+  else if(k>=3||j>=3) items.push({t:'✅ AIやロボットに仕事を奪われるリスク：低い（能動的・志がある）',w:'ok'});
+  else items.push({t:'AI仕事リスク：中程度（専門スキルの強化が重要）',w:'neutral'});
+  // 昇進リスク
+  if((d>=4||a>=4)&&(k<=1||j<=1)) items.push({t:'⚠️ 昇進すると鬱・統合失調症のリスクあり（犬・天使多＋キリギリス/裁判官少）',w:'warn'});
+  if(items.length===0) items.push({t:'バランス型：幅広い職業に対応できる',w:'neutral'});
+  return items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('');
+}
+
+function getHealthResult(s){
+  const [d,a,k,r,j]=s;
+  let items=[],h=0;
+  if(a>=4){items.push({t:'天使4枚以上：ストレスフリー（セロトニン安定）',w:'ok'});h++;}
+  if(k>=4){items.push({t:'キリギリス4枚以上：ストレス発散できている（ドーパミン活性）',w:'ok'});h++;}
+  if(d<=1){items.push({t:'犬1枚以下：自信家で健康的',w:'ok'});h++;}
+  items.unshift(h>=2?{t:`健康状態：良好（3条件中${h}つ該当）`,w:'ok'}:{t:`健康状態：要改善（3条件中${h}つのみ該当）`,w:'warn'});
+  let w=0;
+  if(d>=3){items.push({t:'犬3枚以上：ストレス・不安・過労・気苦労の可能性。問題を処理しない傾向あり',w:'warn'});w++;}
+  if(r>=3){items.push({t:'アリ3枚以上：責任感によるストレスの可能性。無表情でKYとなり自己嫌悪の傾向',w:'warn'});w++;}
+  if(a<=2){items.push({t:'天使2枚以下：精神疾患・不眠症の可能性。感謝の気持ちが希薄で幸せホルモンが出にくい',w:'warn'});w++;}
+  if(j>=4){items.push({t:'裁判官4枚以上：激怒できなければストレス蓄積',w:'warn'});w++;}
+  if(k<=2&&a<=2) items.push({t:'天使・キリギリスが少ない：笑わないのでNK細胞が不活性。難病・免疫力低下リスク',w:'warn'});
+  if(w>=3) items.push({t:'要注意：3項目以上該当 → 健康リスク高',w:'alert'});
+  if(d>=3&&r<=1) items.push({t:'鬱病の危険性あり（犬3以上＋アリ1以下）',w:'alert'});
+  if(r>=4&&k<=1) items.push({t:'強迫性障害・鬱病のリスクあり（アリ4以上＋キリギリス1以下）',w:'alert'});
+  return items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('');
+}
+
+function getBehaviorResult(s){
+  const [d,a,k,r,j]=s;
+  let items=[];
+  // お金の使い方
+  items.push({t:'【お金の使い方】',w:'neutral'});
+  if(d>=2) items.push({t:'犬：浪費傾向 — ストレス発散のため趣味・嗜好品の購入。将来につながらない消費が多い',w:'warn'});
+  if(a>=2&&a>j) items.push({t:'天使：消費傾向 — オープンマインドで自己開示の返報性から消費しやすい',w:'neutral'});
+  if(k>=2) items.push({t:'キリギリス：投資傾向 — 大志を抱いている場合は積極投資。消費も多くお金は貯まりにくい',w:'neutral'});
+  if(r>=2&&r>k) items.push({t:'アリ：消費倹約傾向 — ファミレスなど安い店を選ぶ。割安商品を探す',w:'ok'});
+  if(j>=2) items.push({t:'裁判官：投資傾向 — 人に負けたくないための投資。高額でも尊敬できる人から買う',w:'neutral'});
+  // ゴルディロックス効果
+  items.push({t:'【ゴルディロックス効果（コース選択の傾向）】',w:'neutral'});
+  const maxIdx=s.indexOf(Math.max(...s));
+  const goldi=['中庸Mサイズを選ぶ（真ん中を選ぶ傾向）','中庸Mサイズを選ぶ（真ん中を選ぶ傾向）','高額Lサイズを選ぶ（大きいものを好む）','廉価版Sサイズを選ぶ（安いものを選ぶ）','高額Lサイズを選ぶ（最上位を選ぶ）'];
+  items.push({t:goldi[maxIdx],w:'neutral'});
+  // カリギュラ・ツァイガルニク効果
+  items.push({t:'【ツァイガルニク・カリギュラ効果の効きやすさ】',w:'neutral'});
+  const caligula=['小（効果が出にくい）','中（ある程度効く）','大（非常に効く）','中（ある程度効く）','極大（最も効く）'];
+  items.push({t:`→ ${caligula[maxIdx]}`,w:maxIdx===4?'warn':(maxIdx===2?'ok':'neutral')});
+  // クレジットカード
+  items.push({t:'【クレジットカードの選び方】',w:'neutral'});
+  if(d>=2) items.push({t:'犬：世間一般に普及しているカード。みんなが使っていて安心感があるもの',w:'neutral'});
+  if(a>=2&&a>j) items.push({t:'天使：営業マンがイチオシしてくれるカード。カードの色やデザインが可愛いもの',w:'neutral'});
+  if(k>=2) items.push({t:'キリギリス：ゴールドカード・プラチナカード。機能よりも他人に自慢できること',w:'neutral'});
+  if(r>=2&&r>k) items.push({t:'アリ：年会費無料カード。ポイントが溜め易いもの',w:'neutral'});
+  if(j>=2) items.push({t:'裁判官：プラチナカード・ブラックカード。初対面の人がひれ伏す効果があること',w:'neutral'});
+  // 購買・意思決定
+  items.push({t:'【意思決定・購買スタイル】',w:'neutral'});
+  if(d>0) items.push({t:'犬：みんなが使っていることが判断基準。自分で決められず、決断は他人からの薦めによる',w:'neutral'});
+  if(a>k&&a>j) items.push({t:'天使：商品よりも営業マンの人間性重視。優しく押されなければ決断できない',w:'neutral'});
+  if(k>r&&k>j) items.push({t:'キリギリス：話題性・新しさ・自慢できることが判断基準。好奇心と将来性で即決タイプ',w:'neutral'});
+  if(r>k) items.push({t:'アリ：元本保証・実績・お得感・比較して納得できることが重要。決断を急がせてはいけない',w:'neutral'});
+  if(j>a) items.push({t:'裁判官：尊敬できる人からしか買わない。100点の商品にしか興味がない。薦めには反発。即決タイプ',w:'neutral'});
+  // コンフォートゾーン
+  items.push({t:'【潜在意識・ゾーン診断】',w:'neutral'});
+  const comf=d+a+r, lrn=k+j;
+  if(lrn>comf) items.push({t:`ラーニングゾーン寄り（キリギリス${k}+裁判官${j}=${lrn}）：挑戦→成長。${k>=5||j>=5?'パニックゾーン（危険的挑戦）の可能性あり':'ストレッチゾーンで成長中'}`,w:'ok'});
+  else items.push({t:`コンフォートゾーン寄り（犬${d}+天使${a}+アリ${r}=${comf}）：現状維持→衰退→淘汰の流れに注意`,w:'warn'});
+  return items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('');
+}
+
+function getLifestyleResult(s){
+  const [d,a,k,r,j]=s;
+  let items=[];
+  const maxIdx=s.indexOf(Math.max(...s));
+  // 食事
+  items.push({t:'【食事スタイル】',w:'neutral'});
+  const food=['単に誘われたい・人についていく','癒し系の人と一緒に安らげる店を好む','話題の店・行ったことが自慢できる店・人脈が拡大できる店を好む','ランチは5〜600円。自炊もしくはコンビニ弁当。みかん・バナナ・水筒を持ち歩く傾向','自分のこだわりのある店しか行かない'];
+  items.push({t:`主タイプ（${TYPES[maxIdx]}）の食事傾向：${food[maxIdx]}`,w:'neutral'});
+  if(d>=2) items.push({t:'犬要素：誘われれば何でもついていく受動的な食スタイル',w:'neutral'});
+  if(r>=3) items.push({t:'アリ強め：節約食事スタイル。外食より自炊・コンビニ優先',w:'neutral'});
+  // 写真
+  items.push({t:'【写真に関する考え方】',w:'neutral'});
+  const photo=['写真を撮られたくない・演出が苦手。過去に生きるため思い出を残すのが目的','親友や家族と仲良く撮った写真を大切にする','宣材写真としてのセンスを所持。将来の成功をお金で買えればよいと考える','生真面目な証明写真スタイル。就活は得意でも婚活プロフ写真は苦手。写真館は金額と実績で精査','独自のこだわりが強い。望み通りの出来栄えでなければ破棄する'];
+  items.push({t:`主タイプ（${TYPES[maxIdx]}）の写真観：${photo[maxIdx]}`,w:'neutral'});
+  // 美容院
+  items.push({t:'【美容院・床屋の選び方】',w:'neutral'});
+  const salon=['友人知人が通っていること・個室希望・いつも同じ店員・変化を好まない','優しい対応をしてくれる店員・気配り・気遣いの店','最新情報をもらえる店員・モテる髪型をアドバイスして欲しい・雑談を好む','リーズナブルであること・余計なオプションは極力排除・雑談は好まない','自分のこだわりを聞いてくれる店員・希望した通りのことだけを望む・雑談は必要最小限'];
+  items.push({t:`主タイプ（${TYPES[maxIdx]}）の美容院観：${salon[maxIdx]}`,w:'neutral'});
+  // クルマ
+  items.push({t:'【クルマの運転と選び方】',w:'neutral'});
+  const car=['流れに付いていく・カーナビに依存・大衆車を選ぶ傾向','横断歩道で一時停止・割り込まれたら譲る・可愛い外観の車を選ぶ傾向','装飾・排気音にこだわる・安全運転よりも目立つ運転・自慢できる外車を選ぶ傾向','安全運転・制限速度順守・燃費のよい車を選ぶ傾向','抜かれたら抜き返す・スポーツカーを選ぶ傾向。天使が少ないと免停の可能性'];
+  items.push({t:`主タイプ（${TYPES[maxIdx]}）のクルマ傾向：${car[maxIdx]}`,w:'neutral'});
+  // 座右の銘
+  items.push({t:'【座右の銘タイプ】',w:'neutral'});
+  const motto=['事なかれ主義。問題を先送りして鬱病を目指す。昇進よりヒラを目指す。分かったふりしてうなづく','愛こそがすべて。鳴かぬなら鳴くまで待とうホトトギス','注目されなければ手段選ばず（クリエイティブアボイダンス）。鳴かぬなら鳴かせてみせようホトトギス','問題点解消や時間よりもお金を大切に。お金は鬱病の治療費と老後の蓄えに','勝つためには手段選ばず。鳴かぬなら殺してしまえホトトギス'];
+  items.push({t:`主タイプの座右の銘傾向：「${motto[maxIdx]}」`,w:'neutral'});
+  // 心理カウンセラー適正
+  items.push({t:'【心理カウンセラー適正（同感・共感・無条件の肯定的配慮・意見を述べない）】',w:'neutral'});
+  const counsel=['多い（犬タイプはカウンセラー適正が高い）','多い（天使タイプはカウンセラー適正が高い）','少ない（意見を述べたくなる・積極的すぎる）','不問（状況による）','少ない（意見を述べてしまう・批判的）'];
+  items.push({t:`主タイプのカウンセラー適正：${counsel[maxIdx]}`,w:maxIdx<=1?'ok':(maxIdx===2||maxIdx===4?'warn':'neutral')});
+  return items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('');
+}
+
+function getRiskResult(s){
+  const [d,a,k,r,j]=s;
+  let items=[];
+  // 基本リスク
+  if(d>=4&&a<=1) items.push({t:'🚨 アスペルガー症候群・自閉症の可能性（犬多＋天使無し）',w:'alert'});
+  if(r>=4&&j>=4) items.push({t:'🚨 アスペルガー症候群・サイコパス・サヴァン症候群の可能性（アリ多＋裁判官多）',w:'alert'});
+  if(d>=3&&j===0) items.push({t:'⚠️ ストーカー・ヒモになりやすい配列（犬多＋裁判官少ない）',w:'alert'});
+  if(d<=1&&j<=1&&r>=3) items.push({t:'⚠️ クレーマーになりやすい配列（犬少＋裁判官少＋アリ多）',w:'warn'});
+  if(a<=2&&k<=2) items.push({t:'⚠️ 難病・免疫力低下リスク（天使少＋キリギリス少 → 感謝・笑い不足・NK細胞不活性）',w:'warn'});
+  if(d>=3&&a>=4&&j===0) items.push({t:'⚠️ 共依存傾向（ダメな人を助けようとする）',w:'warn'});
+  if(j>=4&&a<=2) items.push({t:'🚨 境界性人格障害リスク・扱い要注意（裁判官多＋天使少）',w:'alert'});
+  if(d===0&&a===0&&(k>=3||j>=3)) items.push({t:'⚠️ ADHD・パイプカット症候群の可能性（犬0＋アリ0）',w:'warn'});
+  if(d>=3&&j>=4) items.push({t:'🚨 婚活難民配列：男女ともに重症パターン',w:'alert'});
+  if(j>=4) items.push({t:'⚠️ クレーマーになる可能性が高い（裁判官4枚以上）',w:'alert'});
+  if(d>=3&&r>=3&&k<=2) items.push({t:'⚠️ マリッジブルー・婚約破棄リスク（犬多＋アリ多）',w:'warn'});
+  // 追加リスク（スライドデータ）
+  if(d>=3) items.push({t:'⚠️ AIやロボットに仕事を奪われる経済難民リスクが高い（犬多）',w:'warn'});
+  if(d>=2&&r>=2&&j<=1) items.push({t:'⚠️ ネット誹謗中傷クレーマー配列（犬多＋アリ多＋裁判官少）の傾向',w:'warn'});
+  if(j>=3&&a<=2) items.push({t:'⚠️ ネット誹謗中傷クレーマー（裁判官多＋天使少）の傾向',w:'warn'});
+  if((d>=4||(a>=4&&d>=2))&&(k===0||j===0)) items.push({t:'⚠️ 昇進すると鬱または統合失調症のリスクあり（経済難民配列）',w:'alert'});
+  // 詐欺被害リスク
+  if(d>=3||a>=3) items.push({t:'⚠️ 儲け話の詐欺にだまされやすい情報弱者（経済難民）リスクあり（犬・天使多）',w:'warn'});
+  // 一般に魅力とされる部分への劣等感
+  if(d>=3||(r>=3&&a<=2)) items.push({t:'ℹ️ 一般に魅力とされる部分（背が高い・胸が大きい等）に劣等感を感じやすい傾向あり',w:'neutral'});
+  if(items.length===0) items.push({t:'✅ 特筆すべきリスクは見当たりません',w:'ok'});
+  return items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('');
+}
+
+function getSogoResult(s){
+  const [d,a,k,r,j]=s;
+  const sorted=s.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v);
+  const mainIdx=sorted[0].i;
+  const subIdx=sorted[1].v>0?sorted[1].i:-1;
+  const mainName=TYPES[mainIdx];
+  const subName=subIdx>=0?TYPES[subIdx]:null;
+  const open=a+k, close=r+j;
+  const active=k+j, passive=d+a+r;
+  const zoneComf=d+a+r, zoneLrn=k+j;
+
+  // 主タイプ説明
+  const mainDesc={
+    0:'依存・受動的な面が強く、大企業や組織の中で安定を求めるタイプです。自信をつけることが最大の課題であり、誰かに背中を押してもらうことで才能が開花する可能性があります。',
+    1:'他人への思いやりが強く、利他的に行動できる稀有な存在です。尽くしすぎる面がありますが、それが最大の魅力でもあります。感謝の気持ちを忘れずにいることが幸福の鍵です。',
+    2:'行動力・社交性・ひらめきに優れた能動的なタイプです。人脈を広げることが得意で、チャンスをものにする力があります。ただし計画性を高め、お金の管理に注意が必要です。',
+    3:'論理的・慎重・倹約家で、事務・技術に優れた信頼性の高いタイプです。着実に積み上げる力がありますが、リスクを恐れすぎると好機を逃すことも。背中を押してくれる人が重要です。',
+    4:'目標達成への執念と強いリーダーシップを持つタイプです。独立起業に最も向いている配列ですが、他者との摩擦が生じやすく、天使（利他心）とのバランスが人生を左右します。'
+  };
+
+  // お金の使い方
+  const moneyMap={0:'浪費（ストレス発散・趣味・嗜好品）',1:'消費（自己開示・返報性）',2:'投資（大志を抱いた積極投資）',3:'消費倹約（節約・コスパ重視）',4:'投資（人に負けたくないための戦略的投資）'};
+  // 恋愛スタイル
+  const loveMap={0:'お見合い・仲人型（自分からは動けない）',1:'情の厚い尽くし型（尽くしすぎ注意）',2:'自慢できる相手を求める即決型',3:'慎重なお見合い型（展開が遅い）',4:'主導権を握りたい即決型（相手も即決するまで動かない）'};
+  // ゾーン
+  const zoneLabel=zoneLrn>zoneComf?'ラーニングゾーン（挑戦・成長型）':'コンフォートゾーン（現状維持型）';
+
+  // リスクサマリー
+  let riskSummary=[];
+  if(d>=3&&r<=1) riskSummary.push('鬱病リスク');
+  if(r>=4&&k<=1) riskSummary.push('強迫性障害リスク');
+  if(j>=4&&a<=2) riskSummary.push('境界性人格障害リスク');
+  if(d>=3&&j===0) riskSummary.push('ストーカー・ヒモ傾向');
+  if(d>=3||a>=3) riskSummary.push('詐欺被害リスク');
+  if(d>=3) riskSummary.push('AI仕事リスク高');
+  if(j>=4) riskSummary.push('クレーマー傾向');
+
+  let html=`<div class="sogo-box">
+    <div class="sogo-title">📋 総合診断レポート</div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ あなたのハートグラム配列</div>
+      <div class="sogo-text">
+        犬<span class="sogo-highlight">${d}</span>枚 ／ 天使<span class="sogo-highlight">${a}</span>枚 ／ キリギリス<span class="sogo-highlight">${k}</span>枚 ／ アリ<span class="sogo-highlight">${r}</span>枚 ／ 裁判官<span class="sogo-highlight">${j}</span>枚<br>
+        主タイプ：<span style="color:${TYPE_COLORS[mainIdx]};font-weight:700">${mainName}</span>${subName?` ／ 副タイプ：<span style="color:${TYPE_COLORS[subIdx]};font-weight:700">${subName}</span>`:''}
+      </div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 基本性格・強み</div>
+      <div class="sogo-text">${mainDesc[mainIdx]}${subName?`<br>副タイプの${subName}の影響で、${TYPE_DESC[subIdx]}`:''}</div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 潜在意識・行動ゾーン</div>
+      <div class="sogo-text">
+        <span class="zone-badge ${zoneLrn>zoneComf?'zone-learning':'zone-comfort'}">${zoneLabel}</span>
+        ${k>=5?'<span class="zone-badge zone-panic">パニックゾーン（危険的挑戦）</span>':''}
+        ${j>=5?'<span class="zone-badge zone-panic">パニックゾーン（危険的挑戦）</span>':''}
+        <br>オープンマインド（${open}）vs クローズドマインド（${close}）／ 能動（${active}）vs 受動（${passive}）<br>
+        ${open>close?'自己開示が得意で対人関係を築きやすい。':'内向きで孤立性が高い。クローズドマインドの傾向あり。'}
+        ${active>passive?'積極的に行動することで人生が開ける。':'誰かからの後押しが必要なタイプ。'}
+      </div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 恋愛・婚活スタイル</div>
+      <div class="sogo-text">
+        恋愛傾向：${loveMap[mainIdx]}<br>
+        天使枚数（${a}枚）から見た感情表現：${a>=4?'感情豊かで尽くすタイプ（尽くしすぎに注意）':a>=3?'バランスの取れた感情表現':a<=2?'感情表現が苦手・恋愛に慎重な傾向':''}
+        ${a>=3&&j===0?'<br>⚠️ 天使3枚以上＋裁判官0：過去に捨てられた可能性大。':''} 
+        ${j>=a?'<br>⚠️ 裁判官≧天使：感情が先行し、恋愛前に関係がこじれやすい。':''}
+      </div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 仕事・キャリア適性</div>
+      <div class="sogo-text">
+        ${k>=3&&k>r?'営業・クリエイティブ系が得意。新規開拓・起業向き。':r>=3&&r>k?'事務・技術・研究系が得意。着実な積み上げが強み。':d===0&&j>=2?'経営者・独立向き。リーダーシップが発揮できる仕事。':'バランス型で環境適応力がある。'}
+        ${(d>=4||a>=4)&&k<=1&&j<=1?'<br>⚠️ 昇進リスク：責任ある立場になると鬱・統合失調症のリスクあり。':''} 
+        ${d>=3?'<br>⚠️ AIやロボットに仕事を奪われる経済難民リスクが高い。':k>=3||j>=3?'<br>✅ AIやロボットに仕事を奪われるリスクは低い。志と行動力がある。':''}
+      </div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ お金の使い方・消費スタイル</div>
+      <div class="sogo-text">
+        主な傾向：${moneyMap[mainIdx]}<br>
+        ゴルディロックス効果：${ ['中庸Mサイズを選ぶ傾向','中庸Mサイズを選ぶ傾向','高額Lサイズを選ぶ傾向（上位プランに惹かれやすい）','廉価版Sサイズを選ぶ傾向（コスパ重視）','高額Lサイズを選ぶ傾向（最上位を選ぶ）'][mainIdx]}<br>
+        ツァイガルニク・カリギュラ効果：${ ['影響が出にくい（小）','中程度の影響','大きな影響（限定・禁止に弱い）','中程度の影響','極めて大きな影響（極大）'][mainIdx]}
+      </div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 生活・行動スタイルハイライト</div>
+      <div class="sogo-text">
+        食事：${ ['誘われれば何でもついていく','癒し系と安らげる店を好む','話題の店・人脈拡大できる店を好む','ランチ5〜600円。自炊・コンビニ派','自分のこだわりの店のみ'][mainIdx]}<br>
+        美容院：${ ['変化を好まず同じ店員に通う','気配り・気遣いの店を好む','最新トレンドとモテ髪型アドバイスを重視','リーズナブルで余計なオプションなし','こだわりを聞いてくれる店員のみ'][mainIdx]}<br>
+        写真：${ ['撮られたくない・思い出目的','家族・友人との写真を大切にする','宣材センスあり・将来への投資として捉える','証明写真タイプ・婚活写真は苦手','こだわりが強く望み通り以外は破棄'][mainIdx]}<br>
+        クルマ：${ ['流れに乗る・カーナビ依存・大衆車','譲る・可愛い外観の車','装飾・排気音・外車自慢','安全運転・燃費重視','抜き返す・スポーツカー'][mainIdx]}
+      </div>
+    </div>
+
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 健康・メンタル状態</div>
+      <div class="sogo-text">
+        ${a>=4?'天使4枚：セロトニン安定でストレスに強い。':''}${k>=4?'キリギリス4枚：ドーパミン活性でエネルギッシュ。':''}
+        ${d>=3?'⚠️ 犬3枚以上：ストレス蓄積・問題を先送りしやすい。':''}
+        ${a<=2?'⚠️ 天使2枚以下：幸せホルモン（セロトニン）が不足しやすい。精神疾患リスク。':''}
+        ${k<=2&&a<=2?'⚠️ 天使・キリギリスともに少ない：笑い・感謝が不足しNK細胞が不活性。免疫低下リスク。':''}
+        ${d>=3&&r<=1?'🚨 鬱病危険性あり（犬3枚以上＋アリ1枚以下）。':''}
+        ${r>=4&&k<=1?'🚨 強迫性障害・鬱病リスクあり（アリ4枚以上＋キリギリス1枚以下）。':''}
+      </div>
+    </div>
+
+    ${riskSummary.length>0?`
+    <div class="sogo-section">
+      <div class="sogo-section-title">▶ 注意すべきリスク</div>
+      <div class="sogo-text">
+        ${riskSummary.map(r=>`<span style="background:#fee2e2;color:#991b1b;border-radius:5px;padding:2px 8px;margin:2px;display:inline-block;font-size:12px">⚠️ ${r}</span>`).join('')}
+      </div>
+    </div>`:''}
+
+    <div class="sogo-section" style="background:#f0f9ff;border-radius:8px;padding:12px;margin-top:4px">
+      <div class="sogo-section-title">▶ カウンセラーへのアドバイス（アプローチ法）</div>
+      <div class="sogo-text">
+        ${[
+          '決断を促す際は「みんな使っている」「友人も申し込んだ」という社会的証明が効果的。プロポーズ代行も視野に入れる。',
+          '感情に寄り添い、優しく背中を押す。人間性を重視するため、まずカウンセラー自身への信頼構築が最優先。',
+          'イケメン・美女の写真を先に見せる。限定・禁止（カリギュラ効果）が非常に効く。即決を促せる。',
+          '「どこよりも安い・成功報酬型・規約を全て開示」が決め手。急かさず、リスクゼロを丁寧に説明。',
+          '嘘・偽りのない情報提供のみ。営業的なアプローチは逆効果。相手が尊敬できる人間として振る舞うことが唯一の方法。'
+        ][mainIdx]}
+      </div>
+    </div>
+  </div>`;
+  return html;
+}
+
+function backToForm(){
+  document.getElementById('shindan-form').style.display='block';
+  document.getElementById('shindan-result').style.display='none';
+  window.scrollTo(0,0);
+}
+
+function switchSub(name,el){
+  document.querySelectorAll('#shindan-result .sub-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#shindan-result .tabs-inner .tab-inner').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sub-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+// カラー診断データ（拡張版）
+const COLORS=[
+  {name:'桃色',hex:'#FFB6C1',
+   advice:'リードして欲しいタイプ。ロマンチックに愛されたいと思っています。積極的にリードしてあげましょう。女性ホルモンの分泌を助け、世話好き・気配りな面が出やすい。',
+   dislike:'桃色が嫌いな人：自信喪失・自己嫌悪・過去を後悔・愛情や優しさを受け入れられない',
+   lucky:'天使を増やしたい方に向くカラー。婚活には最適な印象を与える。',
+   types:['犬（甘えん坊・守られたい・依存・自己犠牲）','天使（無償の愛・世話好き・夢見がち・気配り）']},
+  {name:'青色',hex:'#4169E1',
+   advice:'ベタベタなれなれしい態度はNG。落ち着いた雰囲気で接することが大切。誠実・信頼・清潔感が特徴。鎮静・鎮痛効果があり、血圧を下げる効果も。',
+   dislike:'青色が嫌いな人：失意・希望喪失・幸せ喪失・整理整頓が嫌い',
+   lucky:'アリを増やしたい方に向くカラー（青・紫・ターコイズ）。論理的・整理整頓を促す。',
+   types:['天使（誠実・信頼・清潔感・哲学的・鎮静作用）','アリ（整理整頓・冷静・理数系・クールダウン）','犬（言いたいことを抑える・協調性・保守的）','キリギリス（問題を解決したい・結婚と仕事の開運）']},
+  {name:'橙色',hex:'#FF8C00',
+   advice:'大勢で楽しく過ごすのが好き。最初は飲み会など賑やかな場所がおすすめ。整腸効果・食欲増進・仕事運・美的センスに関係する色。',
+   dislike:'橙色が嫌いな人：大人しくしていたい・目立ちたくない',
+   lucky:'天使を増やしたい方に向くカラー（ピンク・オレンジ）。親しみ・気配り・幸福感を引き出す。',
+   types:['キリギリス（社交性・行動力・陽気・好奇心・開運・仕事運）','天使（親しみ・傷つきやすい・気配り・親切）','裁判官（おせっかい）']},
+  {name:'赤色',hex:'#DC143C',
+   advice:'評価されたいタイプ。「すごいですね」と連呼し、聞き役に徹することが効果的。食欲増進・血流活性・開運効果あり。',
+   dislike:'赤色が嫌いな人：欲求不満・自信喪失・挫折感・夢喪失・自暴自棄・後悔',
+   lucky:'裁判官を増やしたい方に向くカラー（赤・白）。リーダーシップ・行動力・自信を引き出す。',
+   types:['キリギリス（行動が先・注目されたい・リーダーシップ・啓蒙的・自信・食欲増進・興奮）','裁判官（情熱的・判断力・攻撃的・ワーカホリック・血流活性）']},
+  {name:'紫色',hex:'#8B008B',
+   advice:'大人のムード・センスに重きを置きます。洗練された雰囲気を演出しましょう。ヒーリング効果が大きく興奮を抑える作用も。',
+   dislike:'紫色が嫌いな人：神秘的なものやスピリチュアル的なものを拒否',
+   lucky:'アリを増やしたい方に向くカラー（青・紫・ターコイズ）。内向的・クール・思慮深さを促す。',
+   types:['キリギリス（個性的・芸術性・セクシー・スピリチュアル・哲学的・開運）','裁判官（高貴・嫉妬心・洞察力・神秘的・プライド・カリスマ性）','天使（ヒーリング・宗教）','犬（現実逃避・考えすぎ・不安）']},
+  {name:'黄色',hex:'#FFD700',
+   advice:'好奇心を満たす新しい情報やユーモアが必要。楽しい話題を豊富に用意して。ユーモアセンス・金運・社交性が特徴。',
+   dislike:'黄色が嫌いな人：コンプレックス・目立てるものがない・行動できない',
+   lucky:'キリギリスを増やしたい方に向くカラー（黄・黄緑）。新しいもの好き・主張・社交性を促す。',
+   types:['キリギリス（新しいもの好き・主張・ユーモアセンス・金運・社交性・浪費癖）','天使（甘えたい・寂しがり屋・無邪気・自由奔放）','アリ（言語・計算・理論・神経質・頭の回転が速い）','裁判官（批判的・個人主義・独立自営・孤立）']},
+  {name:'白色',hex:'#E0E0E0',
+   advice:'外見より内面の誠実さで勝負した方が良いタイプ。清潔感を重視しましょう。理想が高く純真無垢。スピリチュアル・開運の色でもある。',
+   dislike:'白色が嫌いな人：潔癖が嫌い・整理整頓が嫌い・純愛が嫌い・不倫中・ストレス状態',
+   lucky:'裁判官を増やしたい方に向くカラー（赤・白）。完璧主義・リセット・新しい気分でスタートを促す。',
+   types:['天使（清く正しく・理想が高い・純真無垢・スピリチュアル・開運）','アリ（シンプル・潔癖・完璧主義・流行に流されない）','裁判官（リセット・過去を切り捨てる・完璧主義）']},
+  {name:'茶色',hex:'#8B4513',
+   advice:'流行の店は好まない。派手な服よりも堅実な恰好を望みます。安定感・保守的・実力・堅実・倹約家が特徴。',
+   dislike:'茶色が嫌いな人：心身ともに健康・地味・忍耐・決まりきった仕事が苦手',
+   lucky:'犬を増やしたい方に向くカラー（緑・茶・ベージュ）。安定感・堅実・腰の低さを引き出す。',
+   types:['犬（フットワークが重い・地味・無口・忍耐・腰が低い）','アリ（安定感・保守的・実力・堅実・倹約家）','裁判官（排泄効果・力が入る）']},
+  {name:'緑色',hex:'#228B22',
+   advice:'安らぎを重視。リラックスできる場所・雰囲気が好まれます。平和主義で対立を避ける。ピーターパン症候群の傾向も。',
+   dislike:'緑色が嫌いな人：孤独感・孤立感・心配性',
+   lucky:'犬を増やしたい方に向くカラー（緑・茶・ベージュ）。調和・謙遜・優しさを引き出す。',
+   types:['犬（調和・引っ込み思案・謙遜・依存・ピーターパン症候群）','天使（平和・対立を避ける・優しさ・家庭の安らぎ・道徳心）','キリギリス（成長・努力・希望・社交的・山好き・開運）']},
+  {name:'灰色',hex:'#808080',
+   advice:'強引に迫るのはNG。時間をかけて徐々に距離を詰めることが大切。子供好きで慎重な面がある。',
+   dislike:'灰色が嫌いな人：平凡を拒否・刺激が好き',
+   lucky:'特定タイプを強化するより現状維持の傾向。新しい挑戦が必要かもしれない。',
+   types:['犬（自信がない・無気力・無個性・目立ちたくない・マンネリ・不健康）','天使（子供好き）','アリ（暗い・まじめ・慎重派・ポーカーフェイス）']},
+  {name:'黒色',hex:'#2a2a2a',
+   advice:'昼のデートより静かな夜を一緒に過ごす方が良いタイプ。独創性・威圧感あり。指示・干渉されることを極度に嫌う。',
+   dislike:'黒色が嫌いな人：厳格なものを拒否・病気や死への不安・ネガティブを拒否',
+   lucky:'黒よりもモダン・独創性の面は生かしつつ、赤や白を取り入れると裁判官エネルギーがより前向きに発揮される。',
+   types:['キリギリス（モダン・独創性）','裁判官（干渉されたくない・孤独の陰・威圧・自己主張・独立心・好き嫌いが明確）','犬（批判をかわしたい・自分を守りたい・感情を抑える・孤独）']},
+  {name:'金色',hex:'#DAA520',
+   advice:'上昇志向・夢・実績・バイタリティーを評価してあげることが効果的。金運・整腸効果あり。',
+   dislike:'金色が嫌いな人：拝金主義・金権主義に嫌悪・野心家・自信家が苦手・勝ちたくない・結果を求められたくない',
+   lucky:'キリギリス・裁判官エネルギーを高める色。成功・豊かさへの意欲を引き出す。',
+   types:['天使（人格者・暖かい・豊か・幸福感・整腸効果）','キリギリス（自慢話が多い・根拠のない自信・外見で判断・金運・喜び）','アリ・裁判官（結果を出したい・成功したい・プライド）']},
+  {name:'銀色',hex:'#C0C0C0',
+   advice:'ロマンチックに紳士的に、秘めた自信をPRできたら効果的。直感・インスピレーション・霊能力に優れている。',
+   dislike:'銀色が嫌いな人：大人しくしていたい・目立ちたくない・無機質な世界では生きていけない',
+   lucky:'キリギリスの直感・インスピレーション面を高める。裁判官の判断力・理想の高さも引き出す。',
+   types:['天使（知性・才能・高級）','キリギリス（直感・空想・インスピレーション・隠れた自信家・ロマンチスト）','裁判官（判断能力が高い・理想が高い・感受性が鋭い・近寄りがたい）','犬（孤独を愛する・寂しがり屋・協調性）']}
+];
+
+function buildColors(){
+  document.getElementById('color-grid').innerHTML=COLORS.map((c,i)=>`
+    <div class="color-card" onclick="selectColor(${i})" id="ccard-${i}">
+      <div class="color-dot" style="background:${c.hex}"></div>
+      <div class="color-name">${c.name}</div>
+    </div>`).join('');
+}
+
+function selectColor(i){
+  document.querySelectorAll('.color-card').forEach(c=>{c.style.borderWidth='1px';c.style.borderColor='#e8e8e8';c.style.background='#fff';});
+  const card=document.getElementById('ccard-'+i);
+  card.style.borderWidth='2px';
+  card.style.borderColor=COLORS[i].hex;
+  const res=document.getElementById('color-result');
+  res.style.display='block';
+  document.getElementById('color-dot-large').style.background=COLORS[i].hex;
+  document.getElementById('color-title').textContent='「'+COLORS[i].name+'」を選んだあなたへ';
+  document.getElementById('color-dislike').textContent=COLORS[i].dislike;
+  document.getElementById('color-advice').textContent=COLORS[i].advice;
+  document.getElementById('color-type-tags').innerHTML=COLORS[i].types.map(t=>`<span class="color-type-tag" style="background:${COLORS[i].hex}20;color:#333;border:1px solid ${COLORS[i].hex}40">${t}</span>`).join('');
+  document.getElementById('color-lucky').innerHTML=`<div class="detail-item info">${COLORS[i].lucky}</div>`;
+  res.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// 2人鑑定
+function buildFutari(){
+  const rows=p=>TYPES.map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <label style="width:80px;font-size:13px;font-weight:700;color:${TYPE_COLORS[i]}">${t}</label>
+      <input type="number" id="${p}-${i}" min="0" max="25" value="0">
+      <span style="font-size:12px;color:#999">枚</span>
+    </div>`).join('');
+  document.getElementById('self-inputs').innerHTML=rows('self');
+  document.getElementById('other-inputs').innerHTML=rows('other');
+}
+
+function calcCompatibility(){
+  const get=p=>TYPES.map((_,i)=>parseFloat(document.getElementById(p+'-'+i).value)||0);
+  const [sd,sa,sk,sr,sj]=get('self');
+  const [od,oa,ok,or_,oj]=get('other');
+  let items=[];
+
+  // 天使差
+  const adiff=Math.abs(sa-oa);
+  if(adiff>=3) items.push({t:`天使の差${adiff}枚：離婚・別れ寸前のリスクあり`,w:'alert'});
+  else if(adiff>=2) items.push({t:`天使の差${adiff}枚：心の葛藤が大きい（多い方が愛情を出しすぎ）`,w:'warn'});
+  else items.push({t:`天使の差${adiff}枚：バランス良好`,w:'ok'});
+
+  // 裁判官S/M
+  const jw=sj>oj?'自分':(oj>sj?'相手':'イーブン');
+  if(jw!=='イーブン') items.push({t:`裁判官：${jw}が主導権を握るタイプ（裁判官=S、犬=M）`,w:'neutral'});
+  else items.push({t:'裁判官：双方イーブン',w:'neutral'});
+
+  // 上下（オープン/クローズ）
+  const so=sa+sk,sc=sr+sj,oo=oa+ok,oc=or_+oj;
+  if(so>=sc*2&&oo>=oc*2) items.push({t:'双方オープンマインド：波長が合いやすい',w:'ok'});
+  else if(sc>=so*2&&oc>=oo*2) items.push({t:'双方クローズドマインド：波長が合いやすい',w:'ok'});
+  else items.push({t:'オープン/クローズが異なる：理解し合う努力が必要',w:'neutral'});
+
+  // 左右（能動/受動）
+  const sact=sk+sj,spas=sd+sa+sr,oact=ok+oj,opas=od+oa+or_;
+  if(sact>spas&&opas>oact) items.push({t:'能動×受動の組み合わせ：役割分担がしやすい',w:'ok'});
+  else if(sact>spas&&oact>opas) items.push({t:'双方能動的：ぶつかりやすい可能性あり',w:'warn'});
+  else items.push({t:'双方受動的：リーダー不在になりやすい',w:'neutral'});
+
+  // アリ↔キリギリスクロス
+  const ariDiff=Math.abs(sr-or_);
+  const kiDiff=Math.abs(sk-ok);
+  if(ariDiff>=3||kiDiff>=3) items.push({t:'アリ↔キリギリスのクロス差が大きい：価値観の違いに注意（節約vs投資）',w:'warn'});
+
+  // 天使と裁判官のバランス
+  const sBalance=sa-sj,oBalance=oa-oj;
+  if(sBalance>=2&&oBalance>=2) items.push({t:'双方：天使>裁判官 → 恋愛バランス良好',w:'ok'});
+  if(sj>=sa&&oj>=oa) items.push({t:'双方：裁判官≧天使 → 衝突リスクあり',w:'warn'});
+
+  // 昇進リスク（理想の結婚相手はクレーマー・アスペルガー配列から）
+  if((sd>=4||(sa>=4&&sd>=2))&&(sk<=1||sj<=1)) items.push({t:'自分：昇進すると鬱・統合失調症のリスクあり（犬4〜5または天使多配列）',w:'warn'});
+  if((od>=4||(oa>=4&&od>=2))&&(ok<=1||oj<=1)) items.push({t:'相手：昇進すると鬱・統合失調症のリスクあり',w:'warn'});
+
+  // ストーカー・ヒモ・クレーマーリスク
+  if(sd>=3&&sj===0) items.push({t:'自分：ストーカー・ヒモになりやすい配列（犬多＋裁判官0）',w:'alert'});
+  if(od>=3&&oj===0) items.push({t:'相手：ストーカー・ヒモになりやすい配列（犬多＋裁判官0）',w:'alert'});
+
+  document.getElementById('compat-result').innerHTML=`
+    <div class="result-box">
+      <div class="section-header">相性診断結果</div>
+      ${items.map(i=>`<div class="detail-item ${i.w}">${i.t}</div>`).join('')}
+    </div>`;
+}
+
+// タイプ別分析データ（拡張版）
+const INSIGHT_DATA={
+  dog:{
+    title:'🐶 犬タイプ',color:'#6366f1',
+    items:[
+      {cat:'基本特性',text:'依存的・大企業病・お見合い限定。受動的・消極的。自信がなく目を伏せる傾向。学習性無力感により自己肯定感・自己効力感が低い。'},
+      {cat:'婚活・恋愛',text:'お見合い形式が向いている。自分から動けないため仲人が必要。犬が多い男性は合コン・パーティーでは上手くいかない。写真は撮られたくない・演出が苦手で婚活には不向き。'},
+      {cat:'仕事',text:'指示を受ける側が向いている。平社員・サポート職に適性。大企業で安定を求める。AIやロボットに仕事を奪われるリスクが最も高いタイプ（経済難民リスク大）。'},
+      {cat:'購買・お金',text:'みんなが使っているものが判断基準。他人からの薦めで決断（自分では決められない）。ストレス発散のため趣味・嗜好品への浪費傾向。将来につながらない消費が多い。ゴルディロックス効果：中庸Mサイズを選ぶ。'},
+      {cat:'クレジットカード',text:'世間一般に普及しているカード。みんなが使っていて安心感があるものを選ぶ。'},
+      {cat:'食事スタイル',text:'単に誘われたい・人についていく。'},
+      {cat:'写真',text:'写真を撮られたくない・演出が苦手。過去に生きるため思い出を残すのが目的。婚活写真には工夫が必要。'},
+      {cat:'美容院',text:'友人知人が通っていること・個室希望・いつも同じ店員・変化を好まない。'},
+      {cat:'クルマ',text:'流れに付いていく・カーナビに依存・大衆車を選ぶ傾向。'},
+      {cat:'座右の銘',text:'事なかれ主義。問題を先送りして鬱病を目指す。昇進よりヒラを目指す。分かったふりしてうなづく。'},
+      {cat:'コンフォートゾーン',text:'コンフォートゾーン（現状維持→衰退→淘汰）に属する。変化への挑戦が必要。'},
+      {cat:'カウンセリング対応',text:'自信がなく目を伏せるので、見つめないようにして聞く。「相手を選んであげます」「私にまかせなさい」というスタンスが効果的。早く決断するよう促す。'},
+      {cat:'リスク',text:'犬3枚以上＋アリ1以下で鬱病危険性。4〜5枚で学習性無力感・自己肯定感なし。共依存・ストーカー・ヒモになりやすい配列。昇進すると鬱・統合失調症のリスクあり（犬4〜5）。詐欺にだまされやすい情報弱者リスク高。'},
+    ]
+  },
+  angel:{
+    title:'👼 天使タイプ',color:'#ec4899',
+    items:[
+      {cat:'基本特性',text:'他人に優しく利他主義。オープンマインド。感謝・義理を大切にし、感情表現が豊か。セロトニン安定で幸福感が高い。'},
+      {cat:'婚活・恋愛',text:'尽くしすぎる傾向。天使4枚以上で情に厚いが尽くしすぎる。天使2枚は機能不全家族の可能性。天使3枚以上＋裁判官0は過去に捨てられた可能性大。写真は家族・友人との写真を大切にする。'},
+      {cat:'仕事',text:'心理カウンセラー適正が最も高い。接客・サービス業向き。昇進すると鬱・統合失調症のリスクあり（天使多配列）。'},
+      {cat:'購買・お金',text:'営業マンがイチオシしてくれるカード・カードの色やデザインが可愛いものを選ぶ。商品よりも営業マンの人間性重視。優しく押されなければ決断できない。消費傾向（オープンマインドで自己開示の返報性）。ゴルディロックス効果：中庸Mサイズを選ぶ。'},
+      {cat:'食事スタイル',text:'癒し系の人と一緒に安らげる店を好む。'},
+      {cat:'写真',text:'親友や家族と仲良く撮った写真を大切にする。'},
+      {cat:'美容院',text:'優しい対応をしてくれる店員を望む。気配り・気遣いの店であること。'},
+      {cat:'クルマ',text:'横断歩道で一時停止・割り込まれたら譲る。可愛い外観の車を選ぶ傾向。'},
+      {cat:'座右の銘',text:'愛こそがすべて。鳴かぬなら鳴くまで待とうホトトギス。'},
+      {cat:'コンフォートゾーン',text:'コンフォートゾーン（現状維持→衰退→淘汰）に属する傾向。'},
+      {cat:'カウンセリング対応',text:'話を聞く姿勢をとる。感情表現を豊かにして聞く。優しく思いやりをもって対応する。押しに弱いため早く決断したほうが得策と伝える。親身に対応して背中を押してあげることが最も効果的。'},
+      {cat:'リスク',text:'天使4枚以上でストレスフリー（セロトニン安定）。天使2枚以下で精神疾患・不眠症リスク。感謝の気持ちが希薄だと幸せホルモンが出ない。詐欺にだまされやすい情報弱者リスク高。昇進すると鬱・統合失調症のリスクあり（天使多配列）。'},
+    ]
+  },
+  kiri:{
+    title:'🦗 キリギリスタイプ',color:'#3b82f6',
+    items:[
+      {cat:'基本特性',text:'営業・芸術・右脳タイプ。能動的・積極的。行動派でリーダーシップあり。お金は貯まりにくい。'},
+      {cat:'婚活・恋愛',text:'自慢できる相手を好む。好奇心と将来性が判断基準。婚活しているつもりが遊んでしまうことがある。ファッションに敏感で異性から好意を示されやすい。写真：宣材写真としてのセンスを所持。将来の成功をお金で買えればよいと考える。'},
+      {cat:'仕事',text:'営業職・起業向き。社外・異業種との人脈が広い。チャンスに強く失敗を恐れない。新企画がひらめく。AIやロボットに仕事を奪われるリスクは低い（志がなければリスクあり）。'},
+      {cat:'購買・お金',text:'ゴールドカード・プラチナカード。機能よりも他人に自慢できることを重視。話題性・新しさ・自慢できることが判断基準で即決タイプ。投資傾向（大志を抱いている場合傾向大）。ゴルディロックス効果：高額Lサイズを選ぶ。ツァイガルニク・カリギュラ効果：大（非常に効く）。'},
+      {cat:'食事スタイル',text:'話題の店・行ったことが自慢できる店・人脈が拡大できる店を好む。'},
+      {cat:'写真',text:'宣材写真としてのセンスを所持。将来の成功をお金で買えればよいと考える。'},
+      {cat:'美容院',text:'最新情報をもらえる店員を望む。モテる髪型をアドバイスして欲しい。雑談を好む。'},
+      {cat:'クルマ',text:'装飾・排気音にこだわる。安全運転よりも目立つ運転。自慢できる外車を選ぶ傾向。'},
+      {cat:'座右の銘',text:'注目されなければ手段選ばず（クリエイティブアボイダンス）。鳴かぬなら鳴かせてみせようホトトギス。'},
+      {cat:'コンフォートゾーン',text:'ラーニングゾーン・ストレッチゾーン（挑戦→成長）。5枚ではパニックゾーン（危険的挑戦）の可能性あり。'},
+      {cat:'カウンセリング対応',text:'行動を褒め、おだてながら聞く。ツァイガルニク効果・カリギュラ効果が大きく働く。イケメン・美女の写真を先に見せる。好奇心と将来性をアピールして即決を促す。'},
+      {cat:'リスク',text:'キリギリス4枚以上でストレス発散（ドーパミン活性）。3枚未満だと売上に困っている可能性。お金の管理に注意が必要。'},
+    ]
+  },
+  ari:{
+    title:'🐜 アリタイプ',color:'#22c55e',
+    items:[
+      {cat:'基本特性',text:'事務・技術・左脳タイプ。倹約家で内面重視の研究者気質。几帳面・神経質。慎重派でリスクに目が行く。心理カウンセラー適正は状況による（不問）。'},
+      {cat:'婚活・恋愛',text:'お見合い限定。慎重なため展開が遅い。一緒にお金を貯めてくれる人が理想。仲人が必要なタイプが多い。写真は生真面目な証明写真タイプで婚活写真は苦手。'},
+      {cat:'仕事',text:'事務・技術職に最適。アリ2枚以上＋キリギリス2枚以下で事務技術職。ミスが少なく言われたことをしっかり対応。AIやロボットに仕事を奪われるリスクは低い（専門職）。'},
+      {cat:'購買・お金',text:'年会費無料カード・ポイントが溜め易いものを選ぶ。元本保証・実績・お得感・他の商品と比較して納得できることが重要。決断を急かせてはいけない。商品説明は淡々と。消費倹約傾向。ゴルディロックス効果：廉価版Sサイズを選ぶ。ツァイガルニク・カリギュラ効果：中（ある程度効く）。'},
+      {cat:'食事スタイル',text:'ランチは5〜600円。自炊もしくはコンビニ弁当。みかん・バナナ・水筒を持ち歩く傾向。'},
+      {cat:'写真',text:'生真面目な証明写真となるので就活は得意でも婚活プロフ写真は苦手。写真館は金額と実績で精査。'},
+      {cat:'美容院',text:'リーズナブルであること。余計なオプションは極力排除したい。雑談は好まない。'},
+      {cat:'クルマ',text:'安全運転・制限速度順守・燃費のよい車を選ぶ傾向。'},
+      {cat:'座右の銘',text:'問題点解消や時間よりもお金を大切に。お金は鬱病の治療費と老後の蓄えに。'},
+      {cat:'コンフォートゾーン',text:'コンフォートゾーン（現状維持→衰退→淘汰）に属する傾向。ただし専門職は例外。'},
+      {cat:'カウンセリング対応',text:'分析するので知恵を褒める。話が遅くなるのでゆっくり聞く。リスクが見えると動けないため、背中を押す工夫が必要。「どこよりも安い・成功報酬型・規約を全て開示」が決め手。'},
+      {cat:'リスク',text:'アリ3枚以上で責任感によるストレス。アリ4枚以上＋キリギリス1以下で強迫性障害・鬱病リスク。無表情でKYとなり自己嫌悪の傾向。アスペルガー症候群（アリ多＋裁判官多）の可能性。ネット誹謗中傷クレーマー配列になりやすい。'},
+    ]
+  },
+  judge:{
+    title:'⚖️ 裁判官タイプ',color:'#f59e0b',
+    items:[
+      {cat:'基本特性',text:'他人に厳しく利己主義。独立起業向き。主導権を握りたいタイプ。高い目標を持ち結果にこだわる。心理カウンセラー適正は低い（意見を述べてしまう）。'},
+      {cat:'婚活・恋愛',text:'裁判官0枚だと人を一切裁かない。裁判官が天使より多いとキツい性格で恋愛前に至らない。裁判官がS（サド）、犬がM（マゾ）の関係。尊敬できる人からしか話を聞かない。写真は独自のこだわりが強く望み通り以外は破棄。'},
+      {cat:'仕事',text:'経営者・独立起業向き。男性3枚・女性2枚あれば経営者。4枚以上でクレーマー注意。AIやロボットに仕事を奪われるリスクは低い。'},
+      {cat:'購買・お金',text:'プラチナカード・ブラックカード。初対面の人がひれ伏す効果があること重視。尊敬できる人からしか買わない。100点の商品にしか興味がない。薦めには反発する。即決タイプ。投資傾向（人に負けたくないための投資）。ゴルディロックス効果：高額Lサイズを選ぶ。ツァイガルニク・カリギュラ効果：極大（最も効く）。'},
+      {cat:'食事スタイル',text:'自分のこだわりのある店しか行かない。'},
+      {cat:'写真',text:'独自のこだわりがある。望み通りの出来栄えでなければ破棄する。'},
+      {cat:'美容院',text:'自分のこだわりを聞いてくれる店員を望む。希望した通りのことだけを望む。雑談は必要最小限であること。'},
+      {cat:'クルマ',text:'抜かれたら抜き返す。スポーツカーを選ぶ傾向。天使が少ないと免停の可能性あり。'},
+      {cat:'座右の銘',text:'勝つために手段選ばず。鳴かぬなら殺してしまえホトトギス。'},
+      {cat:'コンフォートゾーン',text:'ラーニングゾーン（挑戦→成長）。5枚ではパニックゾーン（危険的挑戦）の可能性あり。'},
+      {cat:'カウンセリング対応',text:'目を見て話を聞く。指摘や命令をしない。止められても自分が納得するまで突き進む。嘘・偽りのない情報提供のみ。営業的なアプローチは逆効果。尊敬できる人間として振る舞うことが唯一の方法。'},
+      {cat:'リスク',text:'裁判官4枚以上でクレーマー可能性高い。裁判官多＋天使少で境界性人格障害リスク。裁判官多で激怒できなければストレス蓄積。ネット誹謗中傷クレーマー（裁判官多＋天使少）。アスペルガー症候群（アリ多＋裁判官多）の可能性。'},
+    ]
+  }
+};
+
+function switchInsight(key,el){
+  document.querySelectorAll('#tab-insight .tab-inner').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const d=INSIGHT_DATA[key];
+  document.getElementById('insight-content').innerHTML=`
+    <div class="result-box" style="border-left:4px solid ${d.color}">
+      <div style="font-size:16px;font-weight:800;color:${d.color};margin-bottom:1rem">${d.title}</div>
+      ${d.items.map(item=>`
+        <div class="insight-box">
+          <div class="insight-title" style="color:${d.color}">${item.cat}</div>
+          <div class="insight-item">${item.text}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab-bar .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+buildColors();
+buildFutari();
+shuffleAndReset();
+switchInsight('dog',document.querySelector('#tab-insight .tab-inner'));
+</script>
+</body>
+</html>
